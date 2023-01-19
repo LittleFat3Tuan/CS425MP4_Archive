@@ -90,8 +90,75 @@ def getVersions(sock, remotefile, num, localfile):
                 break
     
 def subML(sock, jtype, filename, batch_size):
-    sock.sendto((jtype + ' ' + filename + ' ' + str(batch_size)).encode('utf-8'), ('0.0.0.0', 8003))
-    
+    sock.sendto(('SUB ' + jtype + ' ' + filename + ' ' + str(batch_size)).encode('utf-8'), ('0.0.0.0', 8003))
+
+def messageML(sock, msg):
+    sock.sendto((msg).encode('utf-8'), ('0.0.0.0', 8003))
+
+def C1(sock):
+    sock.sendto(b'GETMLMAS 5006', ('127.0.0.1', 6019))
+    masNum, addr = sock.recvfrom(SIZE)
+    sock.sendto(b'GETMEM_t', ('127.0.0.1', 5005))
+    mem_list, addr = sock.recvfrom(SIZE)
+    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+    masIP = mem_list[masNum.decode('utf-8')][0]
+    sock.sendto(b'C1', (masIP, 8016))
+    res, _ = sock.recvfrom(SIZE)
+    res = eval(res.decode('utf-8'))
+    for key in res.keys():
+        print(f'Job {key} rate: {res[key][0]} count: {res[key][1]}')
+    #print(res.decode('utf-8'))
+
+def C2(sock):
+    sock.sendto(b'GETMLMAS 5006', ('127.0.0.1', 6019))
+    masNum, addr = sock.recvfrom(SIZE)
+    sock.sendto(b'GETMEM_t', ('127.0.0.1', 5005))
+    mem_list, addr = sock.recvfrom(SIZE)
+    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+    masIP = mem_list[masNum.decode('utf-8')][0]
+    sock.sendto(b'C2', (masIP, 8016))
+    res, _ = sock.recvfrom(SIZE)
+    res = eval(res.decode('utf-8'))
+    for key in res.keys():
+        print(f'Job {key}' )
+        print(f'avg: {res[key][0]}') 
+        print(f'25pctl: {res[key][1]}') 
+        print(f'50pctl: {res[key][2]}') 
+        print(f'75pctl: {res[key][3]}')
+        print(f'std: {res[key][4]}')
+    #print(res.decode('utf-8'))
+
+def C3(sock, jid, bsize):
+    sock.sendto(b'GETMLMAS 5006', ('127.0.0.1', 6019))
+    masNum, addr = sock.recvfrom(SIZE)
+    sock.sendto(b'GETMEM_t', ('127.0.0.1', 5005))
+    mem_list, addr = sock.recvfrom(SIZE)
+    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+    masIP = mem_list[masNum.decode('utf-8')][0]
+    sock.sendto(('C3 '+jid + ' '+bsize).encode('utf-8'), (masIP, 8016))
+
+
+def C4(sock, jid):
+    sock.sendto(b'GETMLMAS 5006', ('127.0.0.1', 6019))
+    masNum, addr = sock.recvfrom(SIZE)
+    sock.sendto(b'GETMEM_t', ('127.0.0.1', 5005))
+    mem_list, addr = sock.recvfrom(SIZE)
+    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+    masIP = mem_list[masNum.decode('utf-8')][0]
+    sock.sendto(('C4 '+jid).encode('utf-8'), (masIP, 8016))
+    res, _ = sock.recvfrom(SIZE)
+    print(res.decode('utf-8'))
+
+def C5(sock):
+    sock.sendto(b'GETMLMAS 5006', ('127.0.0.1', 6019))
+    masNum, addr = sock.recvfrom(SIZE)
+    sock.sendto(b'GETMEM_t', ('127.0.0.1', 5005))
+    mem_list, addr = sock.recvfrom(SIZE)
+    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+    masIP = mem_list[masNum.decode('utf-8')][0]
+    sock.sendto(b'C5', (masIP, 8016))
+    res, _ = sock.recvfrom(SIZE)
+    print(res.decode('utf-8'))
 
 
 
@@ -126,6 +193,17 @@ if __name__ == "__main__":
         getLocal(sockObj)
     if sys.argv[1] == 'get_version':
         getVersions(sockObj, sys.argv[2], int(sys.argv[3]), sys.argv[4])
-    if sys.argv[1] == 'IDunno':
+    if sys.argv[1] == 'IDunnoSUB':
         subML(sockObj, sys.argv[2], sys.argv[3], sys.argv[4])
-
+    if sys.argv[1] == 'IDunnoMSG':
+        messageML(sockObj, sys.argv[2])
+    if sys.argv[1] == 'C1':
+        C1(sockObj)
+    if sys.argv[1] == 'C2':
+        C2(sockObj)
+    if sys.argv[1] == 'C3':
+        C3(sockObj, sys.argv[2], sys.argv[3])
+    if sys.argv[1] == 'C4':
+        C4(sockObj, sys.argv[2])
+    if sys.argv[1] == 'C5':
+        C5(sockObj)

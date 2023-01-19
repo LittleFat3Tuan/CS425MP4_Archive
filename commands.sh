@@ -4,6 +4,8 @@ if [ $1 = "join" ]; then
 	python3 Membership.py &
 	python3 Election.py &
 	python3 DataNode.py &
+	python3 Worker.py &
+	python3 client_ML.py &
 elif [ $1 = "leave" ]; then
 	pkill python3
 elif [ $1 = "list_mem" ]; then
@@ -36,4 +38,14 @@ elif [ $1 = 'store' ]; then
 	python3 tools.py 'store'
 elif [ $1 = 'get_version' ]; then
 	python3 tools.py 'get_version' $2 $3 $4
+elif [ $1 = 'C1' ]; then
+	python3 tools.py 'C1'
+elif [ $1 = 'C2' ]; then
+	python3 tools.py 'C2'
+elif [ $1 = 'C3' ]; then
+	python3 tools.py 'C3' $2 $3
+elif [ $1 = 'C5' ]; then
+	python3 tools.py 'C5'
+elif [ $1 = 'C4' ]; then
+	python3 tools.py 'C4' $2
 fi;

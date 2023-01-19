@@ -51,3 +51,8 @@
 8010: Coordinator's Job tracker 1's port to receive task finish message routed from coordinator.
 8011: Coordinator's Job tracker 2's port to receive task finish message routed from coordinator.
 8012: Coordinator's port to receive task ack message from Worker.
+8013: Stand-by Coordinator's port to receive failure message of Coordinator.
+8014: Elector's port to receive coordinator change message from other Electors.
+8015: Coordinator's port to receive failure message of workers.
+8016: Coordinator's port to receive and handle commands.
+8017: Worker's port to handle C4 commands.

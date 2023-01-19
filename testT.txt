@@ -1,0 +1,400 @@
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we
+encounter might be how to effectively represent the physical query plan in vector. I considered the NLP method or simple word2vec method, however, as a
+programming language, using the method to process human language is inappropriate. I think a vector transformation following the tree structure of the physical query plan
+could be a feasible choice. First, we use discrete numbers to represent different kinds of operations, for example, 1 as the SELECT, and 2 as
+the join. And then we use the amount of data that was involved in each operation as the decorator. Last but not least, we should
+In general, I would like to make improvements on the reward function and the versatility of the previous deep learning application on the database. Furthermore,
+extend the level of the query optimizer.
+﻿From the previous 2 critiques, since I have a machine learning background before, I was trying to look for the implementations of machine learning models
+in the databases. The first critique focused on the ML model's cardinality estimation problem, the author evaluated whether ML models can be efficiently put into
+production in the cardinality estimation process. The third critique developed a system that used ML algorithms into estimating the resources that a query might cost
+in a system, to detect queries that are too heavy for the system. These two papers were published more than 8 years ago, and both
+of them focused on the ML application in cardinality estimation and query performance optimization. In the past 8 years, both machine learning techniques and database
+The major deficiencies of those two papers are that they all used relatively simple machine learning models in the application, and deep learning, one of
+the most popular topics in machine learning, was not brought into the application of the query optimizer. I think that was mainly because at the
+time of the publication of these papers, deep learning hasn't been widely applied to the databases, mostly because, first of all, deep learning techniques were
+not mature at that time, also, the limited hardware was not able to support such a computationally intensive work. However, with the development of hardware,
+there will be more space left for deep learning to perform its actions. Especially in query cardinality estimation, I would like to continue to explore
+Previous researchers have implemented deep learning into query optimization. For example, Jennifer Ortiz, etc. discussed the application of deep learning in the query optimizer. They
+implemented a reinforcement learning network combined with the deep learning model at the transition of each stage, Similar to the Markov Process, the states of
+the reinforcement learning were decided by its last state. They first used the deep learning network to predict the cost, or the properties of the
+queries, and then use the reinforcment learning method to optimize the query. Each step of the process was represented by a vectorized query operation and
+their intermediate results and the transition between each step of the Markov Process were represented by a trained neural network, this supervised neural network NNst
+I would like to explore the following directions to achieve a better optimizer: First, change the reward function of the reinforcement learning process. Second, to
+make the network support the physical query plan.
+The reward function design here is relatively simple because we do not need to consider the delayed reward, each intermediate step has instant feedback
+toward the network, the author used the traditional query optimizer (algorithm based) to mark the cost of each intermediate step, and then feed the negative
+value of this cost to the system, so the system will be able to learn to minimize this cost. Even though this is a feasible
+idea and the most obvious idea, I think a better approach is to use the system's self-estimated value of the subquery properties, including the cost.
+The reason why I think this is a better idea is that I think the purpose of the reward function is to let the neural
+The second direction I would like to explore is to allow the network to support the physical query plan. Of course, the first challenge we

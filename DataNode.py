@@ -42,7 +42,12 @@ def transfer_client(msg,ip):
 
 
     """ Connecting to target node. """
-    client.connect(ADDR)
+    while True:
+        try:
+            client.connect(ADDR)
+            break
+        except:
+            continue
 
     fileName, verNum, replicas = re.split('(W) (.*) (\d+\.*\d*) (\[.*\])', msg)[2:5]
 
@@ -79,7 +84,7 @@ def WriteConsumer():
     PORT = 6003
     ADDR = (IP,PORT)
     server.bind(ADDR) 
-    server.listen()
+    server.listen(10)
     print("[LISTENING] WriteConsumer is listening.")
 
     """A UDP socket to interact with membership service"""
@@ -112,7 +117,13 @@ def WriteConsumer():
             FILE_LIST[fileName].append(int(verNum))
 
         """Send Ack to coordinator"""
-        sock_UDP.sendto(('WACK '+ fileName+ ' ' + verNum).encode(FORMAT), ('172.22.156.202', 6002))
+        sock_UDP.sendto(b'GETMAS 6000', ('127.0.0.1', 6019))
+        masNum, _ = sock_UDP.recvfrom(1024)
+        sock_UDP.sendto(b'GETMEM 6000', ('127.0.0.1', 5004))
+        mem_list, _ = sock_UDP.recvfrom(1024)
+        mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+
+        sock_UDP.sendto(('WACK '+ fileName+ ' ' + verNum).encode(FORMAT), (mem_list[masNum.decode(FORMAT)][0], 6002))
         logging.info(str(time.time()) + " W"+" "+fileName+" v"+ str(verNum))
 
         

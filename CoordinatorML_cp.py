@@ -42,7 +42,115 @@ class tracker:
         pass
 
     def run(self):
-        pass
+        time.sleep(5)
+        while True:
+            if self._stopEvent.isSet():
+                print('Job terminating!')
+                break
+            if None in JOBS:
+                break
+            if JOBS[0].status == 4 and JOBS[1].status == 4:
+                print('Both Jobs ended!')
+            if JOBS[0].status == 4 or JOBS[1].status == 4:
+                print('One of Jobs ended!')
+                if JOBS[0].status == 4 and JOBS[1].status <= 4:
+                    print('Job 0 ended!')
+                    for vm in JOBS[0].members.keys():
+                        mem = (vm, JOBS[0].members[vm])
+                        if mem == 'Denied!':
+                            break
+                        JOBS[1].add_member(mem)
+                        print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+                    JOBS[0].members = {}
+                else:
+                    print('Job 1 ended!')
+                    for vm in JOBS[1].members.keys():
+                        mem = (vm, JOBS[1].members[vm])
+                        if mem == 'Denied!':
+                            break
+                        JOBS[0].add_member(mem)
+                        print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
+                    JOBS[1].members = {}
+                break
+            # qrate1 = JOBS[0].queryrate_est()
+            # qrate2 = JOBS[1].queryrate_est()
+            qqrate1 = JOBS[0].query_rate()
+            qqrate2 = JOBS[1].query_rate()
+            if qqrate1 == -1 or qqrate2 == -1:
+                continue
+            qqrate1 = max(qqrate1, 0.01)
+            qqrate2 = max(qqrate2, 0.01)
+            if 1.2 < qqrate1 / qqrate2 or qqrate1 / qqrate2 < 0.83:
+            #if True:
+                machine_num1 = len(JOBS[0].members)
+                machine_num2 = len(JOBS[1].members)
+                getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
+                #get mem_list from membership
+                mem_list, _ = getmem_UDP.recvfrom(1024)
+                mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+                if '0' in mem_list:
+                    total_machine = len(mem_list) - 2
+                else:
+                    total_machine = len(mem_list) - 1
+                if qqrate1 < qqrate2:
+                    mem = JOBS[1].remove_member()
+                    if mem == 'Denied!':
+                        continue
+                    print('Machine '+mem[0]+' removed from Job '+str(JOBS[1].ID))
+                    JOBS[0].add_member(mem)
+                    print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
+                    time.sleep(3)
+                else:
+                    mem = JOBS[0].remove_member()
+                    if mem == 'Denied!':
+                        continue
+                    print('Machine '+mem[0]+' removed from Job '+str(JOBS[0].ID))
+                    JOBS[1].add_member(mem)
+                    print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+                    time.sleep(3)
+
+                #new_machine_num1 = round(qrate2/machine_num2*total_machine/(qrate1/machine_num1 + qrate2/machine_num2))
+                #new_machine_num1 = round(qrate1/(qrate1+qrate2)*total_machine)
+                # if new_machine_num1 == 0:
+                #     new_machine_num1 = 1
+                # if new_machine_num1 == total_machine:
+                #     new_machine_num1 -= 1
+                # if new_machine_num1 == machine_num1:
+                #     if new_machine_num1 == 1 or new_machine_num1 == total_machine - 1:
+                #         #time.sleep(1)
+                #         continue
+
+                #     if qqrate1 < qqrate2:
+                #         mem = JOBS[1].remove_member()
+                #         if mem == 'Denied!':
+                #             continue
+                #         print('Machine '+mem[0]+' removed from Job '+str(JOBS[1].ID))
+                #         JOBS[0].add_member(mem)
+                #         print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
+                #     else:
+                #         mem = JOBS[0].remove_member()
+                #         if mem == 'Denied!':
+                #             continue
+                #         print('Machine '+mem[0]+' removed from Job '+str(JOBS[0].ID))
+                #         JOBS[1].add_member(mem)
+                #         print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+                # elif new_machine_num1 > machine_num1:
+                #     for i in range(new_machine_num1 - machine_num1):
+                #         mem = JOBS[1].remove_member()
+                #         if mem == 'Denied!':
+                #             break
+                #         print('Machine '+mem[0]+' removed from Job '+str(JOBS[1].ID))
+                #         JOBS[0].add_member(mem)
+                #         print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
+                # else:
+                #     for i in range(machine_num1 -  new_machine_num1):
+                #         mem = JOBS[0].remove_member()
+                #         if mem == 'Denied!':
+                #             break
+                #         print('Machine '+mem[0]+' removed from Job '+str(JOBS[0].ID))
+                #         JOBS[1].add_member(mem)
+                #         print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+            #time.sleep(1)
 
 
 def store_in_SDFS(local_filename,remote_filename):

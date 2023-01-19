@@ -13,17 +13,16 @@ from Client import client as callSDFS
 
 SIZE = 4096
 FORMAT = 'utf-8'
-JOBCNT = 0 # Local counter to generate Job id
-JOBS = [None, None] # store tracker objects
-SCHEDULER = None # store Scheduler objects
-RECENT = ['' for i in range(10)] # record RECENT failure
-LATESTJOB1 = '' # record the latest job done by JOBS[0], used for C4
+JOBCNT = 0
+JOBS = [None, None]
+SCHEDULER = None
+RECENT = ['' for i in range(10)]
+ACTIVE = False
+LATESTJOB1 = ''
 LATESTJOB2 = ''
-
 with open('../config.txt') as f:
     line = f.readlines()[0]
     MACHINENUM, SELF_IP = int(line.split(" ")[0].strip()), line.split(" ")[1].strip()
-
 
 '''UDP socket objects'''
 getmem_UDP = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
@@ -103,6 +102,7 @@ class tracker:
         self.type = jobtype
         self.batch_size = batch_size
         self.machinedict = {}
+        #self.count_size = length
         self.members = members
         self.done = []
         self.todo = []
@@ -122,29 +122,27 @@ class tracker:
         for i in range(self.numQuery):
             #Task name distributed for each machine
             task_filename = self.data+'_'+str(self.ID)+'_'+str(i)
-            #Store files into SDFS
             while True:
-                exitCode = callSDFS('WR', task_filename, task_filename)
-                if exitCode == 1:
-                    break
+                if ACTIVE == True:
+                    exitCode = callSDFS('WR', task_filename, task_filename)
+                    if exitCode == 1:
+                        break
+                    else:
+                        time.sleep(0.5)
                 else:
-                    time.sleep(0.5)
-            # Append file into the todo list.
+                    break
             self.todo.append(task_filename)
         self.todo = self.todo + self.todo + self.todo + self.todo + self.todo
 
-    
     '''Monitor and distribute tasks in inference phase'''
     def inference(self):
         self.status = 3
         #Initial assignment
         self.machinedict = {vm:None for vm in self.members.keys()}
         for vm in list(self.machinedict.keys()):
-            task = self.todo.pop(0)
-            self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
-            ack, _ = self.sockA.recvfrom(SIZE)
-            if ack.startswith(b'IACK'):
-                self.machinedict[vm] = task
+            if ACTIVE == True:
+                task = self.todo.pop(0)
+                self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
         # Whenever a machine finish a task, assign a new task to it
         while True:
             if self._stopEvent.isSet():
@@ -152,95 +150,101 @@ class tracker:
                 break
             try:
                 msg, addr = self.sockF.recvfrom(SIZE)
+                print('Standby Received '+msg.decode('utf-8'))
             except:
                 continue
             if msg.startswith(b'TF'):
                 taskDone = msg.decode(FORMAT).split(' ')[1][:-4]
-                self.done.append((taskDone, str(time.time()), len(self.members)))
+                self.done.append((taskDone, str(time.time())))
+                self.todo.remove(taskDone)
                 # If all job finished, start aggregation procedure
-                if len(self.todo) == 0:
-                    if len(self.done) == self.numQuery:
-                        self.status = 4
-                        break
-                    else:
+                if ACTIVE == True:
+                    if len(self.todo) == 0:
+                        if len(self.done) == self.numQuery:
+                            self.status = 4
+                            break
+                        else:
+                            for vm in list(self.machinedict.keys()):
+                                if vm not in self.machinedict:
+                                    continue
+                                if self.machinedict[vm] == taskDone:
+                                    self.machinedict[vm] = None
+                            continue
+                    if self.toRemove == 1:#new
                         for vm in list(self.machinedict.keys()):
                             if vm not in self.machinedict:
                                 continue
                             if self.machinedict[vm] == taskDone:
-                                self.machinedict[vm] = None
+                                self.toRemove = (vm, self.members[vm])
                         continue
-                # If remove_member is called, the next member that finish a task will be removed
-                if self.toRemove == 1:
                     for vm in list(self.machinedict.keys()):
                         if vm not in self.machinedict:
                             continue
                         if self.machinedict[vm] == taskDone:
-                            self.toRemove = (vm, self.members[vm])
-                    continue
-                # Assign a new task to the VM that just finished a task
-                for vm in list(self.machinedict.keys()):
-                    if vm not in self.machinedict:
-                        continue
-                    if self.machinedict[vm] == taskDone:
-                        task = self.todo.pop(0)
-                        self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
-                        try:
-                            ack, _ = self.sockA.recvfrom(SIZE)
-                        except:
-                            ack = b'NA'
-                        if ack.startswith(b'IACK'):
-                            self.machinedict[vm] = task
-                        # If did not receive ack, check if the worker is alive
-                        elif ack.startswith(b'NA'):
-                            self.sockA.sendto(('LT').encode(FORMAT), (self.members[vm][0], 8001))
-                            try:
-                                ack, _ = self.sockA.recvfrom(SIZE)
-                            except:
-                                ack = b'NA'
-                            if ack.startswith(b'LTACK'):
-                                if ack.decode(FORMAT).split(' ')[1] == task:
-                                        self.machinedict[vm] = task
-                            else:
-                                self.machinedict[vm] = None
-                                self.todo.append(task)
-                    elif self.machinedict[vm] == None:
-                        try:
                             task = self.todo.pop(0)
-                        except:
-                            continue
-                        self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
-                        try:
-                            ack, _ = self.sockA.recvfrom(SIZE)
-                        except:
-                            ack = b'NA'
-                        if ack.startswith(b'IACK'):
-                            self.machinedict[vm] = task
-                        # If did not receive ack, check if the worker is alive
-                        elif ack.startswith(b'NA'):
-                            self.sockA.sendto(('LT').encode(FORMAT), (self.members[vm][0], 8001))
+                            self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
+                            try:
+                                ack, _ = self.sockA.recvfrom(SIZE)
+                                print("StandBy received "+ack.decode(FORMAT))
+                            except:
+                                ack = b'NA'
+                            if ack.startswith(b'IACK'):
+                                self.machinedict[vm] = task
+                            elif ack.startswith(b'NA'):
+                                self.sockA.sendto(('LT').encode(FORMAT), (self.members[vm][0], 8001))
+                                try:
+                                    ack, _ = self.sockA.recvfrom(SIZE)
+                                    print("StandBy received "+ack.decode(FORMAT))
+                                except:
+                                    ack = b'NA'
+                                if ack.startswith(b'LTACK'):
+                                    if ack.decode(FORMAT).split(' ')[1] == task:
+                                            self.machinedict[vm] = task
+                                else:
+                                    self.machinedict[vm] = None
+                                    self.todo.append(task)
+                        elif self.machinedict[vm] == None:
+                            try:
+                                task = self.todo.pop(0)
+                            except:
+                                continue
+                            self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[vm][0], 8001))
                             try:
                                 ack, _ = self.sockA.recvfrom(SIZE)
                             except:
                                 ack = b'NA'
-                            if ack.startswith(b'LTACK'):
-                                if ack.decode(FORMAT).split(' ')[1] == task:
-                                        self.machinedict[vm] = task
-                            else:
-                                self.machinedict[vm] = None
-                                self.todo.append(task)
-
+                            if ack.startswith(b'IACK'):
+                                self.machinedict[vm] = task
+                            # If did not receive ack, check if the worker is alive
+                            elif ack.startswith(b'NA'):
+                                self.sockA.sendto(('LT').encode(FORMAT), (self.members[vm][0], 8001))
+                                try:
+                                    ack, _ = self.sockA.recvfrom(SIZE)
+                                except:
+                                    ack = b'NA'
+                                if ack.startswith(b'LTACK'):
+                                    if ack.decode(FORMAT).split(' ')[1] == task:
+                                            self.machinedict[vm] = task
+                                else:
+                                    self.machinedict[vm] = None
+                                    self.todo.append(task)
                 #print(f'Job {self.ID} Done: {len(self.done)*self.batch_size} ToDo: {len(self.todo)*self.batch_size} InProgress: {sum([1 for val in self.machinedict.values() if val not in [None, "Dead"]])*self.batch_size}')
+
+
 
     '''Collect results and aggregate into one file'''
     def collect_res(self):
         print(f'Job {self.ID} done, collecting results...')
         for shard in self.done:
             while True:
-                exitCode = callSDFS('RR', shard[0]+'_inf', shard[0]+'_inf')
-                if exitCode == 1:
-                    break
+                if ACTIVE == True:
+                    exitCode = callSDFS('RR', shard[0]+'_inf', shard[0]+'_inf')
+                    if exitCode == 1:
+                        break
+                    else:
+                        time.sleep(0.5)
                 else:
-                    time.sleep(0.5)
+                    continue
         with open('Job'+str(self.ID)+'_translated','w+') as temp:
             for shard in self.done:
                 data_got = open(shard[0]+'_inf', encoding = 'utf-8')
@@ -252,29 +256,34 @@ class tracker:
     def add_member(self, new_machine):
         new_machine_ID,new_IP = new_machine[0],new_machine[1][0]#new
         # Ask the worker to change to this job
-        self.sockA.sendto(('CJ '+str(self.ID)+' '+self.type).encode(FORMAT),(new_IP,8001))
+        if ACTIVE == True:
+            self.sockA.sendto(('CJ '+str(self.ID)+' '+self.type).encode(FORMAT),(new_IP,8001))
         try:
             ack, _ = self.sockA.recvfrom(SIZE)
+            print("StandBy received "+ack.decode(FORMAT))
         except:
             ack = b'NA'
-        # If the worker respond, add it into member list and assign task to it.
         if ack.startswith(b'CJACK'):
             self.members[new_machine_ID] = new_machine[1]
             if self.todo == []:
                 self.machinedict[new_machine_ID] = None
                 return
             task = self.todo.pop(0)
-            self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[new_machine_ID][0], 8001))
+            if ACTIVE == True:
+                self.sockA.sendto(('IT '+ task).encode(FORMAT), (self.members[new_machine_ID][0], 8001))
             try:
                 ack, _ = self.sockA.recvfrom(SIZE)
+                print("StandBy received "+ack.decode(FORMAT))
             except:
                 ack = b'NA'
             if ack.startswith(b'IACK'):
                 self.machinedict[new_machine_ID] = task
             elif ack.startswith(b'NA'):
-                self.sockA.sendto(('LT').encode(FORMAT), (self.members[new_machine_ID][0], 8001))
+                if ACTIVE == True:
+                    self.sockA.sendto(('LT').encode(FORMAT), (self.members[new_machine_ID][0], 8001))
                 try:
                     ack, _ = self.sockA.recvfrom(SIZE)
+                    print("StandBy received "+ack.decode(FORMAT))
                 except:
                     ack = b'NA'
                 if ack.startswith(b'LTACK'):
@@ -289,7 +298,7 @@ class tracker:
     
     '''Remove a member, so that it can be assigned to other jobs'''
     def remove_member(self):
-        if sum([1 for item in list(self.machinedict.items()) if item[1] != None]) <= 1:
+        if sum([1 for item in list(self.machinedict.items()) if item[1] != 'Dead']) <= 1:
             return 'Denied!'
         self.toRemove = 1
         while True:
@@ -306,31 +315,35 @@ class tracker:
         self.status = 1
         SJmsg = "SJ"+' '+str(self.ID)+" "+self.type+ " "+str(self.batch_size)
         for vm in self.members.keys():
-            print(f'Instructing {self.members[vm][0]} to train...')
-            self.sockA.sendto(SJmsg.encode(FORMAT), (self.members[vm][0], 8001))
+            if ACTIVE == True:
+                print(f'Instructing {self.members[vm][0]} to train...')
+                self.sockA.sendto(SJmsg.encode(FORMAT), (self.members[vm][0], 8001))
+            else:
+                continue
         ack_count = 0
         while True:
             try:
                 ack, _ = self.sockA.recvfrom(SIZE)
+                print("StandBy received "+ack.decode(FORMAT))
             except:
                 continue
             if ack.startswith(b'SJACK'):
                 ack_count += 1
             if ack_count == len(self.members):
                 break
-        print(f'Job {self.ID} Train finished!')
+        if ACTIVE == True:
+            print(f'Job {self.ID} Train finished!')
         self.status = 2
     
+
     '''Monitor recent failure message, remove failed member from member list.'''
     def RECENT_monitor(self):
         last_fail = ''
         while True:
-            if RECENT[-1] == '':
+            if last_fail == RECENT[-1]:
                 continue
             for member in list(self.members.items()):
                 if member[0] + ' ' + member[1][0] + ' ' + member[1][1] in RECENT:
-                    print('Failed member found!')
-                    print(member[0] + ' ' + member[1][0] + ' ' + member[1][1])
                     self.members.pop(member[0])
                     if self.machinedict[member[0]] not in [None, 'Dead']:
                         task = self.machinedict.pop(member[0])
@@ -345,7 +358,10 @@ class tracker:
         print(f'Stopping Job {self.ID}...')
         self._stopEvent.set()
         res = self.collect_res()
-        self.sockF.sendto(('F '+str(self.ID)+' '+res).encode(FORMAT), (self.clientIP, 8005))
+        if ACTIVE == True:
+            self.sockF.sendto(('F '+str(self.ID)+' '+res).encode(FORMAT), (self.clientIP, 8005))
+        #for vm in self.members.keys():
+            #self.sockA.sendto(b'EJ', (self.members[vm][0], 8001))
     
     '''Calculate query rate'''
     def query_rate(self, t):
@@ -359,40 +375,46 @@ class tracker:
             if cur_time - float(task[1]) <= t:
                 cnt += 1
         return cnt * self.batch_size / t
-    
-    '''An attempt to estimate query rate more  accurately'''
-    def queryrate_est(self):
-        if self.done == []:
-            return -1
-        if self.todo == []:
-            return -1
-        
-        population = []
-        donelist = self.done
-        curNum = donelist[0][2]
-        startTime = donelist[0][1]
-        curCnt = self.batch_size
-        for i, record in enumerate(donelist):
-            if i <= 1:
-                continue
-            if record[2] == curNum:
-                curCnt += self.batch_size
-            else:
-                population.append(curCnt / (float(donelist[i-1][1]) - float(startTime)) / curNum)
-                curNum = record[2]
-                startTime = donelist[i-1][1]
-                curCnt = self.batch_size
-        if donelist[i-1][1] != startTime:
-            population.append(curCnt / (float(donelist[i-1][1]) - float(startTime)) / curNum)
-        return float(np.mean(population))
 
-
-    '''Start inference phase'''
     def run_inference(self):
         threading.Thread(target=self.inference).start()
-        threading.Thread(target=self.RECENT_monitor).start()
 
-'''A Scheduler object is created when there are two jobs in the system, responsible for resource balancing'''
+
+
+def CJACK_Listener_1():
+    while True:
+        if ACTIVE == True:
+            break
+        try:
+            CJACK,addr = sock_JOB1_A.recvfrom(SIZE)
+        except:
+            continue
+        if CJACK.startswith(b'CJACK'):
+            memdict = JOBS[0].members
+            for i in memdict.keys():
+                if memdict[i][0] == addr[0]:
+                    JOBS[1].members[i]  = memdict[i]
+                    JOBS[0].members.pop(i,None)
+                    break
+
+def CJACK_Listener_2():
+    while True:
+        if ACTIVE == True:
+            break
+        try:
+            CJACK,addr = sock_JOB2_A.recvfrom(SIZE)
+        except:
+            continue
+        if CJACK.startswith(b'CJACK'):
+            memdict = JOBS[1].members
+            for i in memdict.keys():
+                if memdict[i][0] == addr[0]:
+                    JOBS[0].members[i]  = memdict[i]
+                    JOBS[1].members.pop(i,None)
+                    break
+
+            
+
 class Scheduler:
     def __init__(self) -> None:
         self._stopEvent = threading.Event()
@@ -403,85 +425,91 @@ class Scheduler:
         num_machine1 = round(prior[type1]/(prior[type1]+prior[type2])*num_machines)
         num_machine2 = num_machines - num_machine1
         return num_machine1, num_machine2
-    
+
     '''Start monitoring inference rate of jobs, reassign resources when necessary'''
     def resource_monitor(self):
         time.sleep(5)
         while True:
-            if self._stopEvent.isSet():
-                print('Job terminating!')
-                break
-            if None in JOBS:
-                break
-            # Check if jobs has ended
-            if JOBS[0].status == 4 and JOBS[1].status == 4:
-                print('Both Jobs ended!')
-            # If one job ends and the other is not, assign all resources to the later
-            if JOBS[0].status == 4 or JOBS[1].status == 4:
-                print('One of Jobs ended!')
-                if JOBS[0].status == 4 and JOBS[1].status <= 4:
-                    print('Job 0 ended!')
-                    for vm in JOBS[0].members.keys():
-                        mem = (vm, JOBS[0].members[vm])
+            if ACTIVE == True:
+                if self._stopEvent.isSet():
+                    print('Job terminating!')
+                    break
+                if None in JOBS:
+                    break
+                # Check if jobs has ended
+                if JOBS[0].status == 4 and JOBS[1].status == 4:
+                    print('Both Jobs ended!')
+                # If one job ends and the other is not, assign all resources to the later
+                if JOBS[0].status == 4 or JOBS[1].status == 4:
+                    print('One of Jobs ended!')
+                    if JOBS[0].status == 4 and JOBS[1].status <= 4:
+                        print('Job 0 ended!')
+                        for vm in JOBS[0].members.keys():
+                            mem = (vm, JOBS[0].members[vm])
+                            if mem == 'Denied!':
+                                break
+                            JOBS[1].add_member(mem)
+                            print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+                        JOBS[0].members = {}
+                    else:
+                        print('Job 1 ended!')
+                        for vm in JOBS[1].members.keys():
+                            mem = (vm, JOBS[1].members[vm])
+                            if mem == 'Denied!':
+                                break
+                            JOBS[0].add_member(mem)
+                            print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
+                        JOBS[1].members = {}
+                    break
+
+                # Calculate currnet query rate
+                qqrate1 = JOBS[0].query_rate(10)
+                qqrate2 = JOBS[1].query_rate(10)
+                if qqrate1 == -1 or qqrate2 == -1:
+                    continue
+                qqrate1 = max(qqrate1, 0.01)
+                qqrate2 = max(qqrate2, 0.01)
+
+                # Check if resource assignment need to be adjusted
+                if 1.2 < qqrate1 / qqrate2 or qqrate1 / qqrate2 < 0.83:
+                    machine_num1 = len(JOBS[0].members)
+                    machine_num2 = len(JOBS[1].members)
+                    getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
+                    #get mem_list from membership
+                    mem_list, _ = getmem_UDP.recvfrom(1024)
+                    mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+                    if '0' in mem_list:
+                        total_machine = len(mem_list) - 2
+                    else:
+                        total_machine = len(mem_list) - 1
+                    # Only reassign one VM at a time
+                    if qqrate1 < qqrate2:
+                        mem = JOBS[1].remove_member()
                         if mem == 'Denied!':
-                            break
-                        JOBS[1].add_member(mem)
-                        print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
-                    JOBS[0].members = {}
-                else:
-                    print('Job 1 ended!')
-                    for vm in JOBS[1].members.keys():
-                        mem = (vm, JOBS[1].members[vm])
-                        if mem == 'Denied!':
-                            break
+                            continue
+                        print('Machine '+mem[0]+' removed from Job '+str(JOBS[1].ID))
                         JOBS[0].add_member(mem)
                         print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
-                    JOBS[1].members = {}
-                break
+                        time.sleep(3)
+                    else:
+                        mem = JOBS[0].remove_member()
+                        if mem == 'Denied!':
+                            continue
+                        print('Machine '+mem[0]+' removed from Job '+str(JOBS[0].ID))
+                        JOBS[1].add_member(mem)
+                        print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
+                        time.sleep(3)
 
-            # Calculate currnet query rate
-            qqrate1 = JOBS[0].query_rate(10)
-            qqrate2 = JOBS[1].query_rate(10)
-            if qqrate1 == -1 or qqrate2 == -1:
-                continue
-            qqrate1 = max(qqrate1, 0.01)
-            qqrate2 = max(qqrate2, 0.01)
+    #new
 
-            # Check if resource assignment need to be adjusted
-            if 1.2 < qqrate1 / qqrate2 or qqrate1 / qqrate2 < 0.83:
-                machine_num1 = len(JOBS[0].members)
-                machine_num2 = len(JOBS[1].members)
-                getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
-                #get mem_list from membership
-                mem_list, _ = getmem_UDP.recvfrom(1024)
-                mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
-                if '0' in mem_list:
-                    total_machine = len(mem_list) - 2
-                else:
-                    total_machine = len(mem_list) - 1
-                # Only reassign one VM at a time
-                if qqrate1 < qqrate2:
-                    mem = JOBS[1].remove_member()
-                    if mem == 'Denied!':
-                        continue
-                    #print('Machine '+mem[0]+' removed from Job '+str(JOBS[1].ID))
-                    JOBS[0].add_member(mem)
-                    #print('Machine '+mem[0]+' added to Job '+str(JOBS[0].ID))
-                    time.sleep(3)
-                else:
-                    mem = JOBS[0].remove_member()
-                    if mem == 'Denied!':
-                        continue
-                    #print('Machine '+mem[0]+' removed from Job '+str(JOBS[0].ID))
-                    JOBS[1].add_member(mem)
-                    #print('Machine '+mem[0]+' added to Job '+str(JOBS[1].ID))
-                    time.sleep(3)
+
 
     '''Set stop event'''
     def stop(self):
         print(f'Stopping Scheduler...')
         self._stopEvent.set()
     
+
     '''Start monitoring'''
     def run(self):
         threading.Thread(target=self.resource_monitor).start() 
@@ -495,6 +523,7 @@ def ackRouter():
 
     while True:
         Ack, addr = sockAck.recvfrom(SIZE)
+        print("StandBy received "+Ack.decode(FORMAT))
         JobID = int(Ack.decode(FORMAT).split(' ')[-1])
         if JOBS[0] != None:
             if JOBS[0].ID == JobID:
@@ -516,6 +545,7 @@ def messageRouter():
 
     while True:
         msg, addr = sockFini.recvfrom(SIZE)
+        print("StandBy received "+msg.decode(FORMAT))
         if msg.startswith(b'TF'):
             JobID = int(msg.decode(FORMAT).split(' ')[-1])
             if JOBS[0] != None:
@@ -536,8 +566,9 @@ def failureListener():
 
     while True:
         msg, _ = sock_UDP.recvfrom(1024)
+        print("StandBy received "+msg.decode(FORMAT))
         # Only proceed if get fail warning
-        if msg.startswith(b'F'):
+        if msg.startswith(b'FAIL'):
             failed = msg.decode(FORMAT)[3:-1].split(', ')
             failed = failed[0] + ' ' + failed[1][1:-1] + ' ' + failed[2][1:-1]
             # If new failed process, delete process in all META entries, and 
@@ -546,7 +577,101 @@ def failureListener():
                 RECENT.pop(0)
                 RECENT.append(failed)
 
-'''Handle commands C1 to C5'''
+
+
+
+'''Main server is responsible to listen to requests from clients and create objects when necessary.'''
+def main_SERVER():
+    global JOBS
+    global JOBCNT
+    global SCHEDULER
+    requestRecv_UDP = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    requestRecv_UDP.bind(('0.0.0.0',8004))
+    while True:
+        request, addr = requestRecv_UDP.recvfrom(1024)
+        request = request.decode('utf-8')
+        print("Received Request"+" "+request)
+        if request.startswith('SUB'):
+            if None not in JOBS:
+                if ACTIVE == True:
+                    requestRecv_UDP.sendto(b'SUBNACK -1', (addr[0], 8005))
+                continue
+            getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
+            #get mem_list from membership
+            mem_list, _ = getmem_UDP.recvfrom(1024)
+            mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+            mem_list.pop(str(MACHINENUM),None)
+            jtype, filename, batch_size = request.split(' ')[1:]
+            while True:
+                exitCode = callSDFS('RR', filename, filename)
+                if exitCode == 1:
+                    break
+                else:
+                    time.sleep(0.5)
+            line_cnt = buf_count_newlines_gen(filename)
+            if JOBS[0] == None:
+                JOBS[0] = tracker(filename, jtype, JOBCNT, int(batch_size),
+                                    mem_list, sock_JOB1_A, sock_JOB1_F, addr[0], line_cnt)
+            elif JOBS[1] == None:
+                scheduler = Scheduler()
+                num_machine1, num_machine2 = scheduler.calc_resource(JOBS[0].type, jtype, len(mem_list))
+                JOBS[0].members = {key:mem_list[key] for i, key in enumerate(mem_list.keys()) if i < num_machine1}
+                member = {key:mem_list[key] for i, key in enumerate(mem_list.keys()) if i >= num_machine1}
+                JOBS[1] = tracker(filename, jtype, JOBCNT, int(batch_size),
+                                    member, sock_JOB2_A, sock_JOB2_F, addr[0], line_cnt)
+                SCHEDULER = scheduler
+            JOBCNT += 1
+            if ACTIVE == True:
+                requestRecv_UDP.sendto(('SUBACK '+str(JOBCNT-1)).encode(FORMAT), (addr[0], 8005))
+        if request.startswith('STR'):
+            for J in JOBS:
+                if J != None:
+                    J.prepare_files()
+                    if ACTIVE == True:
+                        J.train()
+                    if ACTIVE == True:
+                        requestRecv_UDP.sendto(('STRACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
+        if request.startswith('SINF'):
+            for J in JOBS:
+                if J != None:
+                    J.run_inference()
+                    if ACTIVE == True:
+                        requestRecv_UDP.sendto(('SINFACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
+            if SCHEDULER != None:
+                SCHEDULER.run()
+        if request.startswith('EJ'):
+            getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
+            #get mem_list from membership
+            mem_list, _ = getmem_UDP.recvfrom(1024)
+            mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
+            mem_list.pop(str(MACHINENUM),None)
+            for vm in mem_list.keys():
+                if ACTIVE == True:
+                    requestRecv_UDP.sendto(b'EJ', (mem_list[vm][0], 8001))
+                    ack, _ = requestRecv_UDP.recvfrom(SIZE)
+                    print("StandBy received "+ack.decode(FORMAT))
+            for i, J in enumerate(JOBS):
+                if J != None:
+                    if ACTIVE == True:
+                        J.stop()
+                        requestRecv_UDP.sendto(('EJACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
+                    JOBS[i] = None
+            if SCHEDULER != None:
+                if ACTIVE == True:
+                    SCHEDULER.stop()
+                SCHEDULER = None
+
+def active_Listen():
+    global ACTIVE
+    requestRecv_UDP = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+    requestRecv_UDP.bind(('0.0.0.0',8013))
+    while True:
+        AC,_= requestRecv_UDP.recvfrom(1024)
+        print("Activating New Coordinator "+AC.decode(FORMAT))
+        AC = AC.decode(FORMAT)
+        if AC.startswith('AC'):
+            ACTIVE = True
+
 def command_handler():
     sock_COM = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
     sock_COM.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
@@ -574,15 +699,15 @@ def command_handler():
                         res[job.ID] = 'Not enough data.'
                         continue
                     for i in range(1, len(done)):
-                        time = float(done[i][1]) - float(done[i-1][1])
+                        time = done[i][1] - done[i-1][1]
                         for j in range(bsize):
-                            population.append(time/bsize)
+                            population.append(bsize / time)
                     res[jid].append(float(np.mean(population)))
                     res[jid].append(float(np.percentile(population, 25)))
                     res[jid].append(float(np.percentile(population, 50)))
                     res[jid].append(float(np.percentile(population, 75)))
                     res[jid].append(float(np.std(population)))
-            sock_COM.sendto(str(res).encode(FORMAT), (addr[0], 5006)) 
+            sock_COM.sendto(str(res).encode(FORMAT), (addr[0], 5006))  
         elif request.startswith(b'C3'):
             _, jid, bsize = request.decode(FORMAT).split(' ')
             for job in JOBS:
@@ -604,91 +729,14 @@ def command_handler():
                 if job != None:
                     res[job.ID] = list(job.members.keys())
             sock_COM.sendto(str(res).encode(FORMAT), (addr[0], 5006))
-
-
-'''Main server is responsible to listen to requests from clients and create objects when necessary.'''
-def main_SERVER():
-    global JOBS
-    global JOBCNT
-    global SCHEDULER
-    requestRecv_UDP = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
-    requestRecv_UDP.bind(('0.0.0.0',8004))
-    while True:
-        request, addr = requestRecv_UDP.recvfrom(1024)
-        request = request.decode('utf-8')
-        print("Received Request"+" "+request)
-        # If request is job submission, create tracker
-        if request.startswith('SUB'):
-            if None not in JOBS:
-                requestRecv_UDP.sendto(b'SUBNACK -1', (addr[0], 8005))
-                continue
-            getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
-            #get mem_list from membership
-            mem_list, _ = getmem_UDP.recvfrom(1024)
-            mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
-            mem_list.pop(str(MACHINENUM),None)
-            mem_list.pop(str(MACHINENUM+1),None)
-            jtype, filename, batch_size = request.split(' ')[1:]
-            while True:
-                exitCode = callSDFS('RR', filename, filename)
-                if exitCode == 1:
-                    break
-                else:
-                    time.sleep(0.5)
-            line_cnt = buf_count_newlines_gen(filename)
-            if JOBS[0] == None:
-                JOBS[0] = tracker(filename, jtype, JOBCNT, int(batch_size),
-                                    mem_list, sock_JOB1_A, sock_JOB1_F, addr[0], line_cnt)
-            elif JOBS[1] == None:
-                # If more than one job submitted, create scheduler object
-                scheduler = Scheduler()
-                num_machine1, num_machine2 = scheduler.calc_resource(JOBS[0].type, jtype, len(mem_list))
-                JOBS[0].members = {key:mem_list[key] for i, key in enumerate(mem_list.keys()) if i < num_machine1}
-                member = {key:mem_list[key] for i, key in enumerate(mem_list.keys()) if i >= num_machine1}
-                JOBS[1] = tracker(filename, jtype, JOBCNT, int(batch_size),
-                                    member, sock_JOB2_A, sock_JOB2_F, addr[0], line_cnt)
-                SCHEDULER = scheduler
-            JOBCNT += 1
-            requestRecv_UDP.sendto(('SUBACK '+str(JOBCNT-1)).encode(FORMAT), (addr[0], 8005))
-        # If request is start training
-        if request.startswith('STR'):
-            for J in JOBS:
-                if J != None:
-                    J.prepare_files()
-                    J.train()
-                    requestRecv_UDP.sendto(('STRACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
-        # If request is start inference
-        if request.startswith('SINF'):
-            for J in JOBS:
-                if J != None:
-                    J.run_inference()
-                    requestRecv_UDP.sendto(('SINFACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
-            if SCHEDULER != None:
-                SCHEDULER.run()
-        # If request is end jobs
-        if request.startswith('EJ'):
-            getmem_UDP.sendto(b'GETMEM 8002', ('127.0.0.1', 5004))
-            #get mem_list from membership
-            mem_list, _ = getmem_UDP.recvfrom(1024)
-            mem_list = {i.split(' ')[0]:(i.split(' ')[1],i.split(' ')[2]) for i in mem_list.decode('utf-8').split(',')}
-            mem_list.pop(str(MACHINENUM),None)
-            mem_list.pop(str(MACHINENUM+1),None)
-            for vm in mem_list.keys():
-                requestRecv_UDP.sendto(b'EJ', (mem_list[vm][0], 8001))
-                ack, _ = requestRecv_UDP.recvfrom(SIZE)
-            for i, J in enumerate(JOBS):
-                if J != None:
-                    J.stop()
-                    requestRecv_UDP.sendto(('EJACK '+str(J.ID)).encode(FORMAT), (addr[0], 8005))
-                    JOBS[i] = None
-            if SCHEDULER != None:
-                SCHEDULER.stop()
-                SCHEDULER = None
+            
 
 
 
+threading.Thread(target=active_Listen).start() 
 threading.Thread(target=main_SERVER).start() 
 threading.Thread(target=ackRouter).start()
-threading.Thread(target=messageRouter).start()    
-threading.Thread(target=command_handler).start() 
-threading.Thread(target=failureListener).start()
+threading.Thread(target=messageRouter).start()
+threading.Thread(target=CJACK_Listener_1).start()
+threading.Thread(target=CJACK_Listener_2).start()    
+threading.Thread(target=command_handler).start()

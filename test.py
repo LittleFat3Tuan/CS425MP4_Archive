@@ -9,7 +9,7 @@ model = ViTForImageClassification.from_pretrained("google/vit-base-patch16-224")
 
 s = time.time()
 with open('img_urls.txt', 'r') as f:
-    for _ in range(100):
+    for _ in range(50):
         url = f.readline().strip()
         #print(url)
         image = Image.open(requests.get(url, stream=True).raw)

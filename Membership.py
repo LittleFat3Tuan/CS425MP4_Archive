@@ -114,6 +114,7 @@ def server():
                 warning_msg = 'F '+str(failed_proc[0])
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6011))
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6017))
+                sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 8015))
         if time.time() > deadline2:
             #print("Succ1 died!")
             failed_proc = [item for item in Membership if item[1] == SUCC_IP_1]
@@ -129,6 +130,7 @@ def server():
                 warning_msg = 'F '+str(failed_proc[0])
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6011))
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6017))
+                sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 8015))
         if time.time() > deadline3:
             #print("Succ2 Died!")
             failed_proc = [item for item in Membership if item[1] == SUCC_IP_2]
@@ -144,6 +146,7 @@ def server():
                 warning_msg = 'F '+str(failed_proc[0])
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6011))
                 sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 6017))
+                sock.sendto(warning_msg.encode('utf-8'), ('127.0.0.1', 8015))
 
             
 def client():

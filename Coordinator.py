@@ -96,7 +96,7 @@ def server_Coordinator():
                 data, addr = server_UDP.recvfrom(1024)
                 if data.startswith(b'WACK') and data.decode(FORMAT).split(' ')[1] == filename and data.decode(FORMAT).split(' ')[2] == str(filenameDict[filename]):
                     count_ACK += 1 
-                    if count_ACK == 3:
+                    if count_ACK == 2:
                         #If new file, update meta data
                         if flag == 0:
                             META[filename] = [str(i)+' '+mem_list[str(i)][0]+' '+mem_list[str(i)][1] for i in hashlist_WR]
@@ -197,6 +197,7 @@ def failureListener():
 
     while True:
         msg, _ = sock_UDP.recvfrom(1024)
+        print(msg.decode(FORMAT))
         # Only proceed if get fail warning
         if msg.startswith(b'F'):
             failed = msg.decode(FORMAT)[3:-1].split(', ')
